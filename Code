@@ -1,0 +1,374 @@
+//Source Code
+#include<iostream.h>
+#include <iomanip.h>
+#include<conio.h>
+#include<fstream.h>
+#include<dos.h>
+#include<stdio.h>
+#include<stdlib.h>
+#include<ctype.h>
+#include<string.h>
+#include <process.h>
+int NoOfRecords;
+double emmrates[4]={0.02,0.03,0.04,0.05};
+class YearlyRecord
+{
+	unsigned long totvehicles,em2,em3,em4,emh;
+	double totem;
+	char year[5];
+	long n2,n3,n4,nh;
+	void calc()
+	{
+	  totvehicles = n2+n3+n4+nh;
+	  em2 = n2;
+	  em3 = n3;
+	  em4 = n4;
+	  emh = nh;
+	  totem= em2*emmrates[0] + em3*emmrates[1] + em4*emmrates[2] + emh*emmrates[3];
+	}
+	public:
+	double getTotem() {
+		return totem;
+	}
+
+	char* getYear() {
+		return year;
+	}
+
+	void getdata()
+	{
+		cout << endl;
+		cout << "                      ____________________________________\n";
+		cout << "                     | Year :                   :         |\b\b\b\b\b\b\b\b";
+		cin  >> year;
+		cout << "                     | Number of 2 wheelers     :         |\b\b\b\b\b\b\b\b";
+		cin  >> n2;
+		cout << "                     | Number of 3 wheelers     :         |\b\b\b\b\b\b\b\b";
+		cin  >> n3;
+		cout << "                     | Number of 4 wheelers     :         |\b\b\b\b\b\b\b\b";
+		cin  >> n4;
+		cout << "                     | Number of heavy vehicles :         |\b\b\b\b\b\b\b\b";
+		cin  >> nh;
+		cout << "                     |____________________________________|\n";
+
+		if(year[0]== '-' || strlen(year) > 4 || (n2 < 0) ||( n3 < 0) || (n4 < 0) ||( nh < 0) )
+		{
+		if(year[0]== '-' || strlen(year) > 4) {
+		cout << "\n\n                         Invalid Data format in record.\n              Please enter YEAR only as a 4 digit and positive number.";
+			}
+		if((n2 < 0) ||( n3 < 0) || (n4 < 0) ||( nh < 0)) {
+		cout << "\n\n                          Invalid Data format in record.\n                Please enter NUMBER OF VEHICLES as positive values.";
+			}
+			getch();
+			clrscr();
+			getdata();
+		}
+		calc();
+	}
+
+	void display()
+	{
+	cout << "   | " << setw(4) << year << " | "<< setw(5) << n2 << "  |  "<< setw(5) << n3 << " | " << setw(5) << n4 << "  | " << setw(5) << nh << " |    " << setw(10) << totvehicles << "       | " << setw(7) << totem << " |\n";
+	}
+}rec;
+
+void TableHeader() {
+	clrscr();
+	cout << "                    Table of Records - Vehicles and Emmisions\n";
+	cout << "                    Emission Rates :\n2 Wheelers  -  "<<emmrates[0]<<"\n3 Wheelers  -  "<<emmrates[1]<<"\n4 Wheelers  -  "<<emmrates[2]<<"\nHeavy Vehicles  -  "<<emmrates[3]<<"\n";
+	cout << "    _________________________________________________________________________";
+	cout << "\n   | Year |          # of vehicles           | total # of vehicles |   Emm   |\n";
+	cout << "   |-------------------------------------------------------------------------|\n";
+	cout << "   |      |  2 wh  |  3 wh  |  4 wh  | heavy |                     |         |\n";
+	cout << "   |-------------------------------------------------------------------------|\n";
+}
+
+void createRecords() {
+	char choice='y';
+	int count = 1;
+	ofstream fout;
+	ifstream fin;
+	NoOfRecords = 0;
+	fout.open("Records.dat",ios::out|ios::binary);
+	while(choice=='y')
+	{
+	 clrscr();
+	 cout<<"\n                                   Record : " << count << endl;
+	 rec.getdata();
+	 count++;
+	 NoOfRecords++;
+	 fout.write((char*)&rec,sizeof(rec));
+	 cout<<"\n\n                   Enter more records ? [y = yes] [n = no] : ";
+	 cin>>choice;
+	}
+	ofstream o("RECNT.txt", ios::out);
+	o << NoOfRecords;
+	o.close();
+	getch();
+}
+
+void displayRecords() {
+	ifstream fin;
+	fin.open("Records.dat", ios::in | ios::binary );
+	TableHeader();
+	while(!fin.eof()) {
+	fin.read((char *)&rec, sizeof(rec));
+	if(fin.eof()) break;
+	rec.display();
+	}
+	fin.close();
+	getch();
+}
+
+void appendRecords() {
+	clrscr();
+	ifstream i("RECNT.txt", ios::in);
+	i >> NoOfRecords;
+	i.close();
+	ofstream fout;
+	fout.open("Records.dat", ios :: app | ios :: binary);
+	YearlyRecord rec;
+	cout<<"\n                                   Record : " << NoOfRecords + 1 << endl;
+	rec.getdata();
+	fout.write((char *)&rec, sizeof(rec));
+	NoOfRecords++;
+	ofstream o("RECNT.txt", ios::out);
+	o << NoOfRecords;
+	o.close();
+	getch();
+}
+
+void modifyRecords() {
+	clrscr();
+	cout << "\n                    DISPLAYING ALL EXISTING RECORDS.\n";
+	displayRecords();
+	cout << "\n\n                  ENTER YEAR WHOSE RECORD IS TO BE MODIFIED.\n\n";
+	cout << "                                    YEAR : ";
+	char y[4];
+	gets(y);
+	YearlyRecord r;
+	ofstream fout;
+	fout.open("tmpdata.dat", ios::out | ios::binary );
+	ifstream fin;
+	fin.open("Records.dat", ios::in | ios::binary );
+	while(!fin.eof()) {
+		fin.read((char *)&rec, sizeof(rec));
+		if(fin.eof()) break;
+		if(strcmp(rec.getYear(), y) == 0) {
+			clrscr();
+			cout << "                               NEW RECORD :\n\n";
+			r.getdata();
+			fout.write((char *)&r, sizeof(r));
+		}
+		else {
+			fout.write((char *)&rec, sizeof(rec));
+		}
+	}
+	fin.close();
+	fout.close();
+	remove("Records.dat");
+	rename("tmpdata.dat","Records.dat");
+	getch();
+}
+
+void deleteRecords() {
+	int flag=1;
+	ifstream i("RECNT.txt", ios::in);
+	i >> NoOfRecords;
+	i.close();
+	clrscr();
+	cout << "\n                    DISPLAYING ALL EXISTING RECORDS.\n";
+	displayRecords();
+	cout << "\n\n                 ENTER YEAR WHOSE RECORD IS TO BE DELETED.\n\n";
+	cout << "                                    YEAR : ";
+	char y[4];
+	gets(y);
+	YearlyRecord r;
+	ofstream fout;
+	fout.open("tmpdata.dat", ios::out | ios::binary );
+	ifstream fin;
+	fin.open("Records.dat", ios::in | ios::binary );
+	while(!fin.eof()) {
+		fin.read((char *)&rec, sizeof(rec));
+		if(fin.eof()) break;
+		if(strcmp(rec.getYear(), y) == 0) {
+			clrscr();
+			cout << "SELECTED RECORD:\n\n";
+			rec.display();
+			flag=0;
+			char ch;
+			cout << "ARE YOU SURE YOU WANT TO DELETE THE SELECTED RECORD ? (Y / N): ";
+			cin >> ch;
+			if(!(ch == 'y' || ch == 'Y')) {
+				fout.write((char *)&rec, sizeof(rec));
+			}
+			else {
+				NoOfRecords--;
+			}
+		}
+		else {
+			fout.write((char *)&rec, sizeof(rec));
+		}
+	}
+	clrscr();
+	cout<<"\n\n\n\n\n\n\n\n\n";
+	if(flag==1)
+	{
+		cout<<"                                  RECORD NOT FOUND";
+	}
+	fin.close();
+	fout.close();
+	remove("Records.dat");
+	rename("tmpdata.dat","Records.dat");
+	ofstream o("RECNT.txt", ios::out);
+	o << NoOfRecords;
+	o.close();
+	getch();
+}
+
+int adminmenu() {
+	clrscr();
+	cout << "\n\n\n\n";
+	cout << "                      ____________________________________\n";
+	cout << "                     |            ADMIN - MENU            |\n";
+	cout << "                     |                                    |\n";
+	cout << "                     |         [1]  CREATE RECORDS        |\n";
+	cout << "                     |         [2]  APPEND RECORDS        |\n";
+	cout << "                     |         [3]  MODIFY RECORDS        |\n";
+	cout << "                     |         [4]  DELETE RECORDS        |\n";
+	cout << "                     |         [5]  DISPLAY RECORDS       |\n";
+	cout << "                     |         [6]  EXIT                  |\n";
+	cout << "                     |____________________________________|\n\n";
+	cout << "                          ENTER CHOICE < 1 - 6 > : ";
+	int choice;
+	cin >> choice;
+
+	if(choice > 6 || choice < 1) {
+		clrscr();
+		cout << "\n\n\n\n\n\n\n\n\n\n";
+		cout << "                                INVALID CHOICE.\n";
+		cout << "                         PLEASE RE-ENTER VALID CHOICE\n";
+		getch();
+		adminmenu();
+	}
+
+	return choice;
+}
+
+int guestmenu() {
+	clrscr();
+	cout << "\n\n\n\n\n\n";
+	cout << "                      ____________________________________\n";
+	cout << "                     |            GUEST - MENU            |\n";
+	cout << "                     |                                    |\n";
+	cout << "                     |         [1]  DISPLAY RECORDS       |\n";
+	cout << "                     |         [2]  EXIT                  |\n";
+	cout << "                     |____________________________________|\n";
+	cout << endl;
+	cout << "                          ENTER CHOICE < 1 - 2 > : ";
+	int choice;
+	cin >> choice;
+
+	if(choice > 2 || choice < 1) {
+		clrscr();
+		cout << "\n\n\n\n\n\n\n\n\n\n";
+		cout << "                                INVALID CHOICE.\n";
+		cout << "                         PLEASE RE-ENTER VALID CHOICE\n";
+		getch();
+		guestmenu();
+	}
+
+	return choice;
+}
+
+int usermenu() {
+	clrscr();
+	cout << "\n\n\n\n\n\n";
+	cout << "                      ____________________________________\n";
+	cout << "                     |          USER - SELECTION          |\n";
+	cout << "                     |                                    |\n";
+	cout << "                     |             [1]  ADMIN             |\n";
+	cout << "                     |             [2]  GUEST             |\n";
+	cout << "                     |             [3]  EXIT              |\n";
+	cout << "                     |____________________________________|\n";
+	cout << endl;
+	cout << "                           ENTER USER < 1 - 3 > : ";
+	int choice;
+	cin >> choice;
+
+	if(choice > 3 || choice < 1) {
+		clrscr();
+		cout << "\n\n\n\n\n\n\n\n\n\n";
+		cout << "                                INVALID CHOICE.\n";
+		cout << "                         PLEASE RE-ENTER VALID CHOICE\n";
+		getch();
+		usermenu();
+	}
+
+	return choice;
+}
+
+void main()
+{
+	clrscr();
+	int  gmode,j=0;
+
+		cout<<"VERS\n";
+		cout<<"Vehicle Emission Recording System";
+
+	cout<<"INSTRUCTIONS\n";
+
+	cout<<"Enter only years having 4 numbers.\n";
+	cout<<"Number of vehicles of any type not to exceed 6 digits.\n";
+	cout<<"Do not have more than 6 records at any time.\n";
+	cout<<"press any key to continue.";
+	char ch;
+	cin>>ch;
+
+	int adminOrGuest, innerchoice;
+	char pass[10];
+
+	do {
+		adminOrGuest = usermenu();
+		switch(adminOrGuest)
+		{
+			case 1: cout<<"\n                                ENTER PASSWORD: \n";
+					cout<<"                                   ";
+					cin>>pass;
+					if(strcmp(pass,"password")==0)
+					{
+					innerchoice = adminmenu();
+					switch(innerchoice)
+					{
+						case 1: createRecords(); break;
+						case 2: appendRecords(); break;
+						case 3: modifyRecords(); break;
+						case 4: deleteRecords(); break;
+						case 5: displayRecords(); break;
+						case 6: exit(0);
+					}
+					}
+					else{
+					clrscr();
+					cout << "\n\n\n\n\n";
+					cout<<"                     UNAUTHORIZED ACCESS. ACCESS DENIED.\n";
+					cout<<"                    ENTER THE RIGHT password TO CONTINUE\n";
+					getch();
+					}
+					break;
+			case 2: innerchoice = guestmenu();
+					switch(innerchoice)
+					{
+						case 1: displayRecords(); break;
+						case 2: exit(0);
+					}
+					break;
+			case 3: exit(0);
+		}
+	} while(1);
+} }
+
+
+
+
+
